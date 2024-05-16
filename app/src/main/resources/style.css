@@ -38,16 +38,35 @@
     -fx-vgap: 1; /* Vertical gap between cells */
 }
 
-.grid-pane .text-field {
+.white-square {
+    /*
     -fx-font-size: 40;
     -fx-font-family: "Courier New";
-    -fx-max-width: 80;
-    -fx-max-height: 80;
-    -fx-min-width: 80;
-    -fx-min-height: 80;
-    -fx-border-color: lightgray; /* Default light borders for all cells */
-    -fx-border-width: 0.5; /* Thinner borders within subgrids */
+    -fx-border-color: white;
+    -fx-border-width: 0.5;    
+    */
+    -fx-max-width: 70;
+    -fx-max-height: 70;
+    -fx-min-width: 70;
+    -fx-min-height: 70;
+    -fx-fill: antiquewhite;
 }
+
+.black-square {
+    /*
+    -fx-font-size: 40;
+    -fx-font-family: "Courier New";
+    -fx-border-color: lightgray;
+    -fx-border-width: 0.5;
+    */
+    -fx-max-width: 70;
+    -fx-max-height: 70;
+    -fx-min-width: 70;
+    -fx-min-height: 70;
+    -fx-fill: chocolate;
+}
+
+
 
 .text-field-selected {
     -fx-background-color: rgb(147, 155, 221);
