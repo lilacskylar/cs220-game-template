@@ -11,16 +11,27 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 public class App extends Application
 {
-    private static final int NUM_ROWS = 6;
-    private static final int NUM_COLS = 5;
+    private static final int SIZE = 8;
+    // this is the size of each square in the chess or checkers board
+    // this must be kept in sync with the size of the images, and the
+    // size of the squares in the css file
+    private static final int SQUARE_SIZE = 70;
     private VBox root;
-    private TextField[][] textFields = new TextField[NUM_ROWS][NUM_COLS];
+    // using StackPane so that they can hold a rectangle and an image
+    // we use the rectangle to color the squares
+    // and the image to place the pieces
+    private StackPane[][] grid = new StackPane[SIZE][SIZE];
 
     @Override
     public void start(Stage primaryStage) throws Exception
@@ -30,22 +41,100 @@ public class App extends Application
         root.getChildren().add(createMenuBar());
 
         GridPane gridPane = new GridPane();
+        // preferred size of the gridpane
+        gridPane.setPrefSize(SQUARE_SIZE * 8, SQUARE_SIZE * 8);
+        
         root.getChildren().add(gridPane);
-        gridPane.getStyleClass().add("grid-pane");
 
-        for (int row = 0; row < NUM_ROWS; row++)
+        // loosely based on https://stackoverflow.com/questions/69339314/how-can-i-draw-over-a-gridpane-of-rectangles-with-an-image-javafx
+        for (int row = 0; row < SIZE; row++)
         {
-            for (int col = 0; col < NUM_COLS; col++)
+            for (int col = 0; col < SIZE; col++)
             {
-                textFields[row][col] = new TextField();
-                TextField textField = textFields[row][col];
+                Rectangle rect = new Rectangle(SQUARE_SIZE, SQUARE_SIZE);
+
+                if ((row + col) % 2 == 0) { 
+                    rect.getStyleClass().add("white-square");
+                }
+                else {
+                    rect.getStyleClass().add("black-square");
+                }
                 
-                // 6 rows, 5 columns for WORDLE
-                textField.setId(row + "-" + col);
-                gridPane.add(textField, col, row);
+                StackPane cell = new StackPane(rect);
+                
+                grid[row][col] = cell;
+
+                // name each cell with its row and column
+                // unsure we'll need this
+                cell.setId(row + "-" + col);
+
+                // we need to create these extra local final variables
+                // I think this has to do with thread safety?
+                final int r = row;
+                final int c = col;
+                // make each cell clickable
+                cell.setOnMouseClicked(event -> handleMouseClick(event, r, c));
+
+                // finally, put the stackpane into the gridpane
+                gridPane.add(cell, col, row);
             }
         }
 
+        // don't give a width or height to the scene
+        // it will figure it out because there's a menu bar
+        // plus each square is a fixed size
+        Scene scene = new Scene(root);
+
+        // add style information
+        URL styleURL = getClass().getResource("/style.css");
+        String stylesheet = styleURL.toExternalForm();
+        scene.getStylesheets().add(stylesheet);
+
+        // set title and scene and show to the user
+        primaryStage.setTitle("GAME TEMPLATE");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
+        // handler for when we click the close button
+        primaryStage.setOnCloseRequest(event -> {
+            System.out.println("oncloserequest");
+        });
+
+    }
+
+    private void clearBoard()
+    {
+        // removes all of the images (pieces) from the board
+        for (int row = 0; row < SIZE; row++)
+        {
+            for (int col = 0; col < SIZE; col++)
+            {
+                grid[row][col].getChildren().removeIf(child -> child instanceof ImageView);
+            }
+        }
+    }
+
+    private void drawBoard1()
+    {
+        clearBoard();
+        placePiece(Player.WHITE, ChessPiece.PAWN, 1, 0);
+        placePiece(Player.WHITE, ChessPiece.PAWN, 2, 0);
+        placePiece(Player.BLACK, ChessPiece.ROOK, 3, 0);
+        placePiece(Player.BLACK, ChessPiece.QUEEN, 4, 0);
+    }
+
+    private void drawBoard2()
+    {
+        clearBoard();
+        placePiece(Player.WHITE, ChessPiece.PAWN, 1, 4);
+        placePiece(Player.WHITE, ChessPiece.PAWN, 2, 4);
+        placePiece(Player.BLACK, ChessPiece.ROOK, 3, 4);
+        placePiece(Player.BLACK, ChessPiece.QUEEN, 4,4);
+    }
+
+    private void setKeyboardHandler()
+    {
+        // add this to the root which is a VBox
         root.setOnKeyPressed(event -> {
             System.out.println("Key pressed: " + event.getCode());
             switch (event.getCode())
@@ -65,21 +154,53 @@ public class App extends Application
                 
             }
         });
+    }
 
-        // don't give a width or height to the scene
-        Scene scene = new Scene(root);
+    private void handleMouseClick(MouseEvent event, int row, int col)
+    {
+        System.out.println("Mouse clicked on " + row + ", " + col);
 
-        URL styleURL = getClass().getResource("/style.css");
-        String stylesheet = styleURL.toExternalForm();
-        scene.getStylesheets().add(stylesheet);
-        primaryStage.setTitle("GAME TEMPLATE");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        // I'm just showing off that you can do this
+        // the proper way to do this is to have a model class
+        // similar to the Board class in Sudoku
+        // and then ask the model what piece is at this row/col
+        grid[row][col].getChildren().forEach(child -> {
+            if (child instanceof ImageView)
+            {
+                String url = ((ImageView) child).getImage().getUrl();
+                String piece = url.substring(url.lastIndexOf('/') + 1, url.lastIndexOf('.'));
 
-        primaryStage.setOnCloseRequest(event -> {
-            System.out.println("oncloserequest");
+                System.out.println("Image found for piece " + piece);
+            }
         });
+    }
 
+    private void placePiece(Player player, ChessPiece piece, int row, int col)
+    {
+        String imageName = "";
+        if (player == Player.WHITE)
+        {
+            imageName = "w" + piece.toString().toLowerCase() + ".png";
+        }
+        else
+        {
+            imageName = "b" + piece.toString().toLowerCase() + ".png";
+        }
+        ImageView image = loadImage(imageName);
+        // add the image to the cell
+        // each cell is stack pane so that we can "stack" the piece
+        // on top of the rectangle for the square
+        grid[row][col].getChildren().add(image);
+        // not sure if any of this was necessary; commenting it out didn't seem to matter
+        image.setFitWidth(SQUARE_SIZE);
+        image.setFitHeight(SQUARE_SIZE);
+        //image.fitWidthProperty().bind(grid[row][col].widthProperty().subtract(2));
+        //image.fitHeightProperty().bind(grid[row][col].heightProperty().subtract(2));
+    }
+
+    private ImageView loadImage(String name)
+    {
+        return new ImageView(getClass().getResource("/assets/" + name).toExternalForm());
     }
 
     private MenuBar createMenuBar()
@@ -94,6 +215,14 @@ public class App extends Application
 
         addMenuItem(fileMenu, "Load from file", () -> {
             System.out.println("Load from file");
+        });
+
+        addMenuItem(fileMenu, "board1", () -> {
+            drawBoard1();
+        });
+
+        addMenuItem(fileMenu, "board2", () -> {
+            drawBoard2();
         });
 
         menuBar.getMenus().add(fileMenu);
