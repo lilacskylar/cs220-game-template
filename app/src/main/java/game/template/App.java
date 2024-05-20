@@ -4,75 +4,49 @@
 package game.template;
 
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.GridPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class App extends Application
 {
-    private static final int NUM_ROWS = 6;
-    private static final int NUM_COLS = 5;
     private VBox root;
-    private TextField[][] textFields = new TextField[NUM_ROWS][NUM_COLS];
+    private StackPane table;
+    private int width = 800;
+    private int height = 600;
 
     @Override
     public void start(Stage primaryStage) throws Exception
     {
         root = new VBox();
 
+        // menubar
         root.getChildren().add(createMenuBar());
 
-        GridPane gridPane = new GridPane();
-        root.getChildren().add(gridPane);
-        gridPane.getStyleClass().add("grid-pane");
+        // mouse handler
+        addMouseHandler();
 
-        for (int row = 0; row < NUM_ROWS; row++)
-        {
-            for (int col = 0; col < NUM_COLS; col++)
-            {
-                textFields[row][col] = new TextField();
-                TextField textField = textFields[row][col];
-                
-                // 6 rows, 5 columns for WORDLE
-                textField.setId(row + "-" + col);
-                gridPane.add(textField, col, row);
-            }
-        }
-
-        root.setOnKeyPressed(event -> {
-            System.out.println("Key pressed: " + event.getCode());
-            switch (event.getCode())
-            {
-                // check for the key input
-                case ESCAPE:
-                    // remove focus from the textfields by giving it to the root VBox
-                    root.requestFocus();
-                    System.out.println("You pressed ESC key");
-                    break;
-                case ENTER:
-                    System.out.println("You pressed ENTER key");
-                    break;
-                default:
-                    System.out.println("you typed key: " + event.getCode());
-                    break;
-                
-            }
-        });
+        table = new StackPane();
+        root.getChildren().add(table);
 
         // don't give a width or height to the scene
-        Scene scene = new Scene(root);
+        //Scene scene = new Scene(root);
+        Scene scene = new Scene(root, width, height);
 
         URL styleURL = getClass().getResource("/style.css");
         String stylesheet = styleURL.toExternalForm();
         scene.getStylesheets().add(stylesheet);
-        primaryStage.setTitle("GAME TEMPLATE");
+        primaryStage.setTitle("Play Poker like it's 2004");
         primaryStage.setScene(scene);
         primaryStage.show();
 
@@ -80,6 +54,34 @@ public class App extends Application
             System.out.println("oncloserequest");
         });
 
+        //System.out.printf("center of stackpane  %f, %f\n", table.getWidth() / 2, table.getHeight() / 2);
+
+    }
+
+    private void addMouseHandler()
+    {
+        root.setOnMouseClicked(event -> {
+            deal();
+        });
+    }
+
+    private void clearTable()
+    {
+        table.getChildren().removeIf(node -> node instanceof ImageView);
+    }
+
+    private void deal()
+    {
+        clearTable();
+        Deck d = new Deck();
+        d.shuffle();
+        for (int i = 1; i <=7; i++)
+        {
+            Card card = d.draw();
+            placeCard(card, i);
+        }
+        placeCard(null, 8);
+        placeCard(null, 9);
     }
 
     private MenuBar createMenuBar()
@@ -101,11 +103,124 @@ public class App extends Application
         return menuBar;
     }
 
+    private static Map<Card, ImageView> cardImageViews = new HashMap<>();
+
+    private static ImageView getBackOfCard()
+    {
+        // we need a new one every time
+        return new ImageView(new Image(App.class.getResource("/assets/Back.png").toExternalForm()));
+    }
+
+    private static ImageView getCardImageView(Card card)
+    {
+        if (card == null)
+        {
+            return getBackOfCard();
+        }
+        if (!cardImageViews.containsKey(card))
+        {
+            String cardName = card.toString();
+            String cardPath = "/assets/" + cardName + ".png";
+            System.out.println("cardPath: " + cardPath);
+            URL cardURL = App.class.getResource(cardPath);
+            Image cardImage = new Image(cardURL.toExternalForm());
+            ImageView cardImageView = new ImageView(cardImage);
+            cardImageViews.put(card, cardImageView);
+        }
+        return cardImageViews.get(card);
+    }
+
+    private void placeCard(Card card, int number)
+    {
+        /*
+         * The xOffset and yOffset are in terms of where the card should be placed
+         * By default a StackPane will center the card at W/2, 0, so the center of the top
+         * 1,2,3 are the flop
+         * 4 is the turn
+         * 5 is the river
+         * 6 is the player's first card
+         * 7 is the player's second card
+         * 8 is the opponent's first card
+         * 9 is the opponent's second card
+         */
+        int xOffset = 0;
+        int yOffset = 0;
+        switch (number)
+        {
+            case 1:
+                xOffset = -2*64;
+                yOffset = height/2 - 100;
+                break;
+            case 2:
+                xOffset = -64;
+                yOffset = height/2 - 100;
+                break;
+            case 3:
+                xOffset = 0;
+                yOffset = height/2 - 100;
+                break;
+            case 4:
+                xOffset = 64;
+                yOffset = height/2 - 100;
+                break;
+            case 5:
+                xOffset = 2*64;
+                yOffset = height/2 - 100;
+                break;
+            case 6:
+                xOffset = -32;
+                yOffset = height - 150;
+                break;
+            case 7:
+                xOffset = 32;
+                yOffset = height - 150;
+                break;
+            case 8:
+                xOffset = -32;
+                yOffset = 0;
+                break;
+            case 9:
+                xOffset = 32;
+                yOffset = 0;
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid card number: " + number);
+        }
+
+        ImageView cardImageView = getCardImageView(card);
+        cardImageView.setTranslateX(xOffset);
+        cardImageView.setTranslateY(yOffset);
+        table.getChildren().add(cardImageView);
+    }
+
     private void addMenuItem(Menu menu, String name, Runnable action)
     {
         MenuItem menuItem = new MenuItem(name);
         menuItem.setOnAction(event -> action.run());
         menu.getItems().add(menuItem);
+    }
+
+    private void addKeyHandler()
+    {
+        root.setOnKeyPressed(event -> {
+            System.out.println("Key pressed: " + event.getCode());
+            switch (event.getCode())
+            {
+                // check for the key input
+                case ESCAPE:
+                    // remove focus from the textfields by giving it to the root VBox
+                    root.requestFocus();
+                    System.out.println("You pressed ESC key");
+                    break;
+                case ENTER:
+                    System.out.println("You pressed ENTER key");
+                    break;
+                default:
+                    System.out.println("you typed key: " + event.getCode());
+                    break;
+                
+            }
+        });
     }
 
     public static void main(String[] args) 
