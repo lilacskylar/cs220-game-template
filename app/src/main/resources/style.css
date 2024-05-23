@@ -55,8 +55,20 @@
 
 .text-field-highlight {
     -fx-background-color: rgb(238, 148, 148);
+    background-color: rgb(238, 148, 148);
 }
 
+.text-field-correct {
+    -fx-background-color: rgb(79, 167, 79) !important;
+}
+
+.text-field-misplaced {
+    -fx-background-color: rgb(255, 245, 100) !important;
+}
+
+.text-field-incorrect {
+    -fx-background-color: rgb(255, 100, 100) !important;
+}
 
 .grid-pane .right-border {
     -fx-border-color: black;

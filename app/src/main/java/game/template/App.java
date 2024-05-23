@@ -4,9 +4,14 @@
 package game.template;
 
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Random;
+import java.util.Scanner;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -14,6 +19,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 
 public class App extends Application
 {
@@ -21,6 +29,127 @@ public class App extends Application
     private static final int NUM_COLS = 5;
     private VBox root;
     private TextField[][] textFields = new TextField[NUM_ROWS][NUM_COLS];
+    private String word;
+    private int wordscount;
+    private char[] inputArray = new char[5];
+    private String inputWord;
+
+
+    public String[] loadWords(InputStream inputStream) { //to get the words that i'm using
+    Scanner scan = new Scanner(inputStream);
+    String[] words = new String[100]; //i didn't need more than 100
+    int count = 0;
+    while (scan.hasNextLine() && count < 100) {
+        words[count] = scan.nextLine();
+        count++;
+    }
+    scan.close();
+    return Arrays.copyOf(words, count);
+}
+    public void clear(){
+        for (int i = 0; i < NUM_ROWS; i++){
+            for (int j = 0; j < NUM_COLS; j++){
+                TextField textField = textFields[i][j];
+                textField.setText("");
+            }
+        }
+        newWord();
+    }
+    public String newWord(){
+        Random random = new Random();
+        String wordslist = """ 
+            MAIZE
+            GHOST
+            PLUNK
+            ROWDY
+            LOOSE
+            APPLE
+            HAPPY
+            CANDY
+            VIEWS
+            FOCUS
+            PORTS
+            ENTER
+            BUILD
+            FACTS
+            SUGAR
+            TOTAL
+            SHIFT
+            SALSA
+            BURNT
+            BURST
+            WILDS
+            WINDY
+            WINGS
+            TRAIN
+                """; //the list of words
+        String[] words = loadWords(new java.io.ByteArrayInputStream(wordslist.getBytes()));
+        if (words.length > 0) {
+            word = words[random.nextInt(words.length)];
+            System.out.println(word); //this was for testing but it does just give the answer
+        } else {
+            System.out.println("No words loaded");
+        }
+        return word;
+    }
+    public void check(){
+       StringBuilder inputWord = new StringBuilder();
+       System.out.println(inputArray);
+       inputWord.append(inputArray);
+       inputWord.toString();
+       String newValue = inputWord.toString(); //i don't know if this is all necessary but i put it in to dtry and make the input correct and i don't wanna risk breaking it
+                if (newValue.length() == 5) {
+                    if (newValue.equals(word)){
+                        System.out.println("Correct!");
+                        Alert alert = new Alert(AlertType.INFORMATION);
+                        alert.setTitle("Congratulations");
+                        alert.setHeaderText("The word was: " + word);
+                        alert.setContentText("You have guessed the word correctly!");
+                        alert.showAndWait();
+                    }
+                    else {
+                        int lastFilled = 0; //tracking the lowest row of the chart filled
+                        for (int row = 0; row < NUM_ROWS; row++){
+                            if (textFields[row][0].getText().length() > 0){
+                                lastFilled = row;
+                            }
+                        }
+                            for (int col = 0; col < 5; col++)
+                            {
+                                textFields[lastFilled][col] = new TextField(); 
+                                TextField textField = textFields[lastFilled][col];
+                               // textField.textProperty().addListener((observable, oldValue, v) -> { //i had hoped this would fix the color problem but then it wouldn't run any of my if/else statements
+                                if (newValue.charAt(col) == word.charAt(col)){
+                                    System.out.println("reached correct letter");
+                                    textField.getStyleClass().removeAll("text-field-incorrect", "text-field-misplaced");
+                                    textField.getStyleClass().add("text-field-correct");
+                                    System.out.println(textField.getStyleClass());
+                                    // inputArray[col] = ' '; //resetting it to blank so it doesn't change for double letters
+                                } 
+                                else if (word.contains(newValue.charAt(col) + "")){
+                                    System.out.println("reached misplaced letter");
+                                    textField.getStyleClass().removeAll("text-field-incorrect", "text-field-correct");
+                                    textField.getStyleClass().add("text-field-misplaced");
+                                    System.out.println(textField.getStyleClass());
+                                }
+                                else {
+                                    System.out.println("reached incorrect letter");
+                                    textField.getStyleClass().removeAll("text-field-correct", "text-field-misplaced");
+                                    textField.getStyleClass().add("text-field-incorrect");
+                                    System.out.println(textField.getStyleClass());
+                                }
+                         //   });
+                        }
+                    }
+                 }
+                    else {
+                        Alert alert = new Alert(AlertType.ERROR);
+                        alert.setTitle("Error");
+                        alert.setHeaderText("The word must be 5 characters long");
+                        alert.showAndWait();
+                    }
+                
+    }
 
     @Override
     public void start(Stage primaryStage) throws Exception
@@ -32,17 +161,29 @@ public class App extends Application
         GridPane gridPane = new GridPane();
         root.getChildren().add(gridPane);
         gridPane.getStyleClass().add("grid-pane");
-
+        newWord();
         for (int row = 0; row < NUM_ROWS; row++)
         {
             for (int col = 0; col < NUM_COLS; col++)
             {
                 textFields[row][col] = new TextField();
+                final int column = col;
                 TextField textField = textFields[row][col];
-                
+
                 // 6 rows, 5 columns for WORDLE
                 textField.setId(row + "-" + col);
                 gridPane.add(textField, col, row);
+                textField.textProperty().addListener((observable, oldValue, newValue) -> {
+                    int indexRow = Integer.parseInt(textField.getId().split("-")[0]);
+                    newValue = newValue.toUpperCase();
+                    if (newValue.length() > 0){
+                        inputArray[column] = newValue.charAt(0);
+                        System.out.println("Input so far:");
+                        System.out.println(inputArray);
+                        inputWord = inputWord + newValue.charAt(0);
+                    }
+                    System.out.println("TextField " + textField.getId() + " changed from \"" + oldValue + "\" to \"" + newValue + "\"");
+                });
             }
         }
 
@@ -58,6 +199,11 @@ public class App extends Application
                     break;
                 case ENTER:
                     System.out.println("You pressed ENTER key");
+                    check();
+                    break;
+                case TAB: 
+                    System.out.println("You pressed TAB key");
+                    
                     break;
                 default:
                     System.out.println("you typed key: " + event.getCode());
@@ -72,7 +218,7 @@ public class App extends Application
         URL styleURL = getClass().getResource("/style.css");
         String stylesheet = styleURL.toExternalForm();
         scene.getStylesheets().add(stylesheet);
-        primaryStage.setTitle("GAME TEMPLATE");
+        primaryStage.setTitle("WORDLE");
         primaryStage.setScene(scene);
         primaryStage.show();
 
@@ -98,6 +244,19 @@ public class App extends Application
 
         menuBar.getMenus().add(fileMenu);
 
+        Menu checkMenu = new Menu("Check");     
+        addMenuItem(checkMenu, "Check", () -> {
+            System.out.println("Check");
+            check();
+        });
+        menuBar.getMenus().add(checkMenu);
+        
+        Menu clearMenu = new Menu("Clear");
+        addMenuItem(clearMenu, "Clear", () -> {
+            System.out.println("Clear");
+            clear();
+        });
+        menuBar.getMenus().add(clearMenu);
         return menuBar;
     }
 
