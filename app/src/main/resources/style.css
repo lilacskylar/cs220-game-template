@@ -59,15 +59,15 @@
 }
 
 .text-field-correct {
-    -fx-background-color: rgb(79, 167, 79) !important;
+    -fx-background-color: rgb(106, 204, 106);
 }
 
 .text-field-misplaced {
-    -fx-background-color: rgb(255, 245, 100) !important;
+    -fx-background-color: rgb(255, 245, 100);
 }
 
 .text-field-incorrect {
-    -fx-background-color: rgb(255, 100, 100) !important;
+    -fx-background-color: rgb(243, 73, 73);
 }
 
 .grid-pane .right-border {

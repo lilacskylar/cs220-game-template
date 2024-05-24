@@ -51,6 +51,7 @@ public class App extends Application
             for (int j = 0; j < NUM_COLS; j++){
                 TextField textField = textFields[i][j];
                 textField.setText("");
+                textField.getStyleClass().removeAll("text-field-correct", "text-field-incorrect", "text-field-misplaced");
             }
         }
         newWord();
@@ -82,11 +83,22 @@ public class App extends Application
             WINDY
             WINGS
             TRAIN
+            TRAIL
+            TRASH
+            TRUTH
+            FINAL
+            FIGHT
+            FROST
+            FRESH
+            FRIED
+            STARS
+            STARK
+            STAND
                 """; //the list of words
         String[] words = loadWords(new java.io.ByteArrayInputStream(wordslist.getBytes()));
         if (words.length > 0) {
             word = words[random.nextInt(words.length)];
-            System.out.println(word); //this was for testing but it does just give the answer
+            // System.out.println(word); //this was for testing but it does just give the answer
         } else {
             System.out.println("No words loaded");
         }
@@ -99,8 +111,19 @@ public class App extends Application
        inputWord.toString();
        String newValue = inputWord.toString(); //i don't know if this is all necessary but i put it in to dtry and make the input correct and i don't wanna risk breaking it
                 if (newValue.length() == 5) {
+                    int lastFilled = 0; //tracking the lowest row of the chart filled
+                        for (int row = 0; row < NUM_ROWS; row++){
+                            if (textFields[row][0].getText().length() > 0){
+                                lastFilled = row;
+                            }
+                        }
                     if (newValue.equals(word)){
                         System.out.println("Correct!");
+                        for (int i = 0; i < 5; i++){
+                            TextField textField = textFields[lastFilled][i];
+                            textField.getStyleClass().removeAll("text-field-incorrect", "text-field-misplaced");
+                            textField.getStyleClass().add("text-field-correct");
+                        }
                         Alert alert = new Alert(AlertType.INFORMATION);
                         alert.setTitle("Congratulations");
                         alert.setHeaderText("The word was: " + word);
@@ -108,35 +131,29 @@ public class App extends Application
                         alert.showAndWait();
                     }
                     else {
-                        int lastFilled = 0; //tracking the lowest row of the chart filled
-                        for (int row = 0; row < NUM_ROWS; row++){
-                            if (textFields[row][0].getText().length() > 0){
-                                lastFilled = row;
-                            }
+                        if (lastFilled == 5){
+                            Alert alert = new Alert(AlertType.ERROR);
+                            alert.setTitle("Error");
+                            alert.setHeaderText("You have run out of guesses");
+                            alert.setContentText("The word was: " + word);
+                            alert.showAndWait();
                         }
                             for (int col = 0; col < 5; col++)
                             {
-                                textFields[lastFilled][col] = new TextField(); 
                                 TextField textField = textFields[lastFilled][col];
                                // textField.textProperty().addListener((observable, oldValue, v) -> { //i had hoped this would fix the color problem but then it wouldn't run any of my if/else statements
                                 if (newValue.charAt(col) == word.charAt(col)){
-                                    System.out.println("reached correct letter");
                                     textField.getStyleClass().removeAll("text-field-incorrect", "text-field-misplaced");
                                     textField.getStyleClass().add("text-field-correct");
-                                    System.out.println(textField.getStyleClass());
                                     // inputArray[col] = ' '; //resetting it to blank so it doesn't change for double letters
                                 } 
                                 else if (word.contains(newValue.charAt(col) + "")){
-                                    System.out.println("reached misplaced letter");
                                     textField.getStyleClass().removeAll("text-field-incorrect", "text-field-correct");
                                     textField.getStyleClass().add("text-field-misplaced");
-                                    System.out.println(textField.getStyleClass());
                                 }
                                 else {
-                                    System.out.println("reached incorrect letter");
                                     textField.getStyleClass().removeAll("text-field-correct", "text-field-misplaced");
                                     textField.getStyleClass().add("text-field-incorrect");
-                                    System.out.println(textField.getStyleClass());
                                 }
                          //   });
                         }
@@ -178,11 +195,14 @@ public class App extends Application
                     newValue = newValue.toUpperCase();
                     if (newValue.length() > 0){
                         inputArray[column] = newValue.charAt(0);
-                        System.out.println("Input so far:");
-                        System.out.println(inputArray);
+                        //System.out.println("Input so far:");
+                        //System.out.println(inputArray); had just been using these to check the input when it wasn't working
                         inputWord = inputWord + newValue.charAt(0);
                     }
-                    System.out.println("TextField " + textField.getId() + " changed from \"" + oldValue + "\" to \"" + newValue + "\"");
+                    if (textField.getText().length() > 1){
+                        textField.setText(newValue.substring(0, 1)); //prevent multiple letters in one box
+                    }
+                   // System.out.println("TextField " + textField.getId() + " changed from \"" + oldValue + "\" to \"" + newValue + "\"");
                 });
             }
         }
@@ -203,7 +223,10 @@ public class App extends Application
                     break;
                 case TAB: 
                     System.out.println("You pressed TAB key");
-                    
+                    break;
+                case DELETE:
+                    System.out.println("You pressed DELETE key");
+                    clear();
                     break;
                 default:
                     System.out.println("you typed key: " + event.getCode());
