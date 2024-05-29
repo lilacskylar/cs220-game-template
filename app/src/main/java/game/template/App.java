@@ -98,7 +98,7 @@ public class App extends Application
         String[] words = loadWords(new java.io.ByteArrayInputStream(wordslist.getBytes()));
         if (words.length > 0) {
             word = words[random.nextInt(words.length)];
-            // System.out.println(word); //this was for testing but it does just give the answer
+            //System.out.println(word); //this was for testing but it does just give the answer
         } else {
             System.out.println("No words loaded");
         }
